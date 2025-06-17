@@ -42,8 +42,8 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 
 ---
 ## Report Preview: 
-[![Dashboard Preview](images/report_1.png)]
-[![Dashboard Preview](images/report_2.png)]
+![Dashboard Preview](images/report_1.png)
+![Dashboard Preview](images/report_2.png)
 ##  View R Markdown Analysis:
 [Click here](https://rpubs.com/Lekhana_S_0197/1323161)
 
