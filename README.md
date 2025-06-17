@@ -7,10 +7,9 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 
 ## Tools & Technologies
 
-- SQL  
-- R (dplyr, ggplot2)  
+- SQL 
+- R (dplyr, ggplot2, tidyverse)  
 - Excel  
-- Tableau  
 - PowerPoint
 
 ---
@@ -39,7 +38,7 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 - Uncovered pricing inefficiencies in low-rated products  
 - Recommended promotional focus on top-selling categories  
 - Simulated a retention model for converting Basic tier customers  
-- Delivered clean, executive-friendly visuals using Tableau and PowerPoint
+- Delivered clean, executive-friendly visuals using R markdown and PowerPoint
 
 ---
 
