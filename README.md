@@ -1,4 +1,4 @@
-# 📊 Project Overview
+# Project Overview
 
 This project explores key business KPIs using **simulated e-commerce data** (Amazon-like), focusing on customer retention, purchase behavior, and product performance.  
 The objective was to **identify hidden patterns** and guide strategic decisions around **pricing**, **subscriptions**, and **customer segmentation**.
@@ -43,6 +43,6 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 
 ---
 
-## 📎 View R Markdown Analysis:
+##  View R Markdown Analysis:
+[Click here](https://rpubs.com/Lekhana_S_0197/1323161)
 
-[🔗https://rpubs.com/Lekhana_S_0197/1323161)
