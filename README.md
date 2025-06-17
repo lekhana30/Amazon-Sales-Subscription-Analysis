@@ -41,9 +41,9 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 - Delivered clean, executive-friendly visuals using R markdown and PowerPoint
 
 ---
-
+## Report Preview: 
+[![Dashboard Preview](images/report_1.png)]
+[![Dashboard Preview](images/report_2.png)]
 ##  View R Markdown Analysis:
-[![Dashboard Preview](images/report_1.png)](https://your-tableau-link.com)
-
 [Click here](https://rpubs.com/Lekhana_S_0197/1323161)
 
