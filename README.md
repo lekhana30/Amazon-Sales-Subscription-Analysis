@@ -7,7 +7,6 @@ The objective was to **identify hidden patterns** and guide strategic decisions 
 
 ## Tools & Technologies
 
-- SQL 
 - R (dplyr, ggplot2, tidyverse)  
 - Excel  
 - PowerPoint
