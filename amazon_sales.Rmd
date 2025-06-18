@@ -1,0 +1,275 @@
+---
+title: "Analyzing Amazon sales and subscription KPI to improve Revenue & Retention"
+author: "Lekhana S"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# What is Amazon trying to solve?
+
+Amazon wants to boost revenue and reduce subscription cancellations.
+
+# How? 
+Use sales and customer data to uncover key patterns and recommend actions
+* Understand what drives product revenue
+* Identify churn trends in subscriptions
+* Segment and analyze customer behavior
+* Provide data-driven recommendations
+
+```{r loading packages, message=FALSE}
+library(tidyverse)
+install.packages("dplyr")
+library(dplyr)
+```
+
+```{r reading dataset, message=FALSE, warning=FALSE}
+sales_data<- read_csv("sales_data.csv")
+customer_data<- read_csv("customer_data.csv")
+```
+# Revenue by product category
+```{r revenue by category}
+# Calculate total revenue by product category
+revenue_by_category <- sales_data %>%
+  group_by(product_category) %>%
+  summarise(total_revenue = sum(total_price, na.rm = TRUE)) %>%
+  arrange(desc(total_revenue))
+blue_palette <- c(
+  "Books" = "#7fb3d5",      
+  "Wellness" = "#D5DEEF",
+  "Electronics" = "#B1C9EF",
+  "Clothing" = "#8AAEF0",
+  "Toys" = "#628ECB",
+  "Home" = "#395886",        
+  "Grocery" = "#aed6f1"     
+)
+
+ggplot(revenue_by_category, 
+       aes(x = reorder(product_category, total_revenue), 
+           y = total_revenue, fill = product_category)) +
+  geom_col() +
+  geom_text(aes(label = round(total_revenue, 0)),  # You can use comma_format() too
+            hjust = 1.1, color = "white", size = 4, fontface = "bold") +
+  coord_flip() +
+  scale_fill_manual(values = blue_palette)+
+  labs(title = "Revenue by Product Category",
+       x = "Product Category",
+       y = "Total Revenue") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none"
+  )
+
+```
+
+
+## Who are the best customers (based on CLTV)?
+
+```{r cltv}
+cltv <- sales_data %>%
+  group_by(customer_id) %>%
+  summarise(total_spent = sum(total_price)) %>%
+  arrange(desc(total_spent))
+
+head(cltv, 10)
+
+ggplot(cltv, aes(x = total_spent)) +
+  geom_histogram(fill = "#638ECB", color = "white", bins = 10) +
+  labs(title = "Distribution of Customer Lifetime Value",
+       x = "Total Spent", y = "Number of Customers") +
+  theme_minimal()
+  
+
+
+```
+
+```{r}
+library(ggplot2)
+
+buyer_counts <- sales_data %>%
+  group_by(customer_id) %>%
+  summarise(purchase_count = n()) %>%
+  mutate(buyer_type = ifelse(purchase_count == 1, "One-Time", "Repeat")) %>%
+  count(buyer_type)
+
+ggplot(buyer_counts, aes(x = "", y = n, fill = buyer_type)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste0(round(n/sum(n)*100), "%")), 
+            position = position_stack(vjust = 0.5), color = "white", size = 5) +
+  labs(title = "Customer Types: One-Time vs Repeat Buyers",
+       fill = "Buyer Type") +
+  theme_void() +
+  scale_fill_manual(values = c("One-Time" = "#B1C9EF", "Repeat" = "#638ECB"))  # blue palette
+
+```
+
+
+## Customer Purchase Behavior
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Categorize customers into tiers
+frequency_tiers <- sales_data %>%
+  group_by(customer_id) %>%
+  summarise(purchase_count = n()) %>%
+  mutate(tier = case_when(
+    purchase_count == 1 ~ "One-Time",
+    purchase_count <= 3 ~ "Low Frequency (2–3)",
+    purchase_count <= 5 ~ "Mid Frequency (4–5)",
+    purchase_count >= 6 ~ "High Frequency (6+)"
+  )) %>%
+  count(tier)
+
+# Plot pie chart
+ggplot(frequency_tiers, aes(x = "", y = n, fill = tier)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = paste0(round(n/sum(n)*100), "%")),
+            position = position_stack(vjust = 0.5), color = "white", size = 5) +
+  labs(title = "Customer Purchase Frequency Segments",
+       fill = "Purchase Tier") +
+  theme_void() +
+  scale_fill_manual(values = c(
+    "One-Time" = "#B1C9EF",           # Light blue
+    "Low Frequency (2–3)" = "#aed6f1",# Deep blue
+    "Mid Frequency (4–5)" = "#a9cce3",# Lemon green
+    "High Frequency (6+)" = "#3498db" # Sunset orange
+  ))
+
+```
+
+
+📉 Where is churn highest?
+Note: This plot includes only customers who have churned
+```{r churn-time-analysis}
+customer_data %>%
+  filter(!is.na(subscription_end)) %>%
+  mutate(churn_duration = as.numeric(subscription_end - subscription_start)) %>%
+  ggplot(aes(churn_duration)) +
+  geom_histogram(binwidth = 10, fill = "#aed6f1", color = "black") +
+  labs(title = "Distribution of Churn Duration (in Days)",
+       x = "Days until Churn", y = "Number of Customers")
+```
+
+
+`
+
+# Impact of Product Ratings on Revenue
+```{r}
+library(dplyr)
+
+review_sales <- sales_data %>%
+  mutate(rating_group = case_when(
+    product_rating >= 4.5 ~ "High Rated (4.5+)",
+    product_rating >= 3.5 ~ "Mid Rated (3.5–4.4)",
+    TRUE ~ "Low Rated (<3.5)"
+  )) %>%
+  group_by(rating_group) %>%
+  summarise(
+    total_sales = sum(total_price, na.rm = TRUE),
+    avg_price = mean(unit_price, na.rm = TRUE),
+    count = n()
+  ) %>%
+  arrange(desc(total_sales))
+
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(review_sales, aes(x = rating_group, y = total_sales, fill = rating_group)) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = paste0("₹", round(total_sales, 0))),
+            vjust = -0.5, size = 3, fontface = "bold") +
+  scale_y_continuous(labels = scales::comma_format()) +
+  scale_fill_manual(values = c(
+    "High Rated (4.5+)" = "#b3d7ee",     # Lemon green
+    "Mid Rated (3.5–4.4)" = "#dcecf5",  # Blue
+    "Low Rated (<3.5)" = "#94d2fa"      # Sunset orange
+  )) +
+  labs(title = "Impact of Product Reviews on Total Sales",
+       x = "Rating Group",
+       y = "Total Sales") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.title = element_text(face = "bold"),
+    legend.position = "none"
+  )
+
+```
+# Churn rate by subscription tier
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Prepare the data
+churn_data <- customer_data %>%
+  mutate(churned = ifelse(!is.na(subscription_end), "Yes", "No")) %>%
+  group_by(subscription_tier, churned) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = churned, values_from = count, values_fill = 0) %>%
+  mutate(total = Yes + No,
+         churn_rate = Yes / total)
+
+# Create donut plot
+ggplot(churn_data, aes(x = 2, y = churn_rate, fill = subscription_tier)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) +
+  geom_text(aes(label = paste0(subscription_tier, "\n", round(churn_rate*100, 1), "%")),
+            position = position_stack(vjust = 0.5), color = "white", size = 5) +
+  theme_void() +
+  labs(title = "Churn Rate by Subscription Tier",
+       fill = "Subscription Tier") +
+  theme(legend.position = "none")+
+  scale_fill_manual(values = c(
+    "Basic" = "#85c8f3",    
+    "Standard" = "#467a9c",  
+    "Premium" = "#b3d7ee"    
+  ))
+
+
+```
+# Product price by Rating group
+
+```{r}
+library(tidyr)
+library(ggplot2)
+
+sales_data %>%
+  mutate(rating_group = case_when(
+    product_rating >= 4.5 ~ "High Rated (4.5+)",
+    product_rating >= 3.5 ~ "Mid Rated (3.5–4.4)",
+    TRUE ~ "Low Rated (<3.5)"
+  )) %>%
+  group_by(rating_group) %>%
+  summarise(
+    Avg_Price = mean(unit_price, na.rm = TRUE),
+    Median_Price = median(unit_price, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(Avg_Price, Median_Price), names_to = "Metric", values_to = "Price") %>%
+  ggplot(aes(x = rating_group, y = Price, fill = Metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Average vs Median Price by Rating Group",
+       x = "Rating Group", y = "Price (₹)", fill = "Metric") +
+  scale_fill_manual(values = c("Avg_Price" = "#4798cc", "Median_Price" = "#a8dbfb")) +
+  theme_minimal()
+
+```
+
+# Insights
+
+* Focus on High-Revenue Categories: Wellness & Electronics contribute the   most to revenue — prioritize them in promotions.
+* Target Mid & High-Frequency Buyers: 49% of repeat customers buy 4+ times   ideal for personalized offers or exclusive deals.
+* Improve Retention in Basic Tier: Highest churn rate observed — consider   loyalty rewards or simplified upgrade options.
+* Encourage More Product Reviews:High-rated products generate less      revenue; incentivize honest reviews to balance perceptions and drive conversions.
+* Monitor Low-Rated Price Ranges: Low-rated products are priced high (avg ₹139) — reassess pricing or quality to reduce customer dissatisfaction.
+
+These insights will guide Amazon to tweak pricing strategy, improve subscription tiers, and enhance product targeting.
+
